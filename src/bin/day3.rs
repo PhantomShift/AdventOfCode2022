@@ -24,7 +24,7 @@ fn get_badge_type(first: &str, second: &str, third: &str) -> char {
 }
 
 #[test]
-fn day_2_part_1() {
+fn day_3_part_1() {
     let input = "vJrwpWtwJgWrhcsFMMfFFhFp
 jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
 PmmdzqPrVvPwwTWBwg
@@ -51,7 +51,7 @@ CrZsJsPPZsGzwwsLwLmpwMDw";
 }
 
 #[test]
-fn day_2_part_2() {
+fn day_3_part_2() {
     let input = "vJrwpWtwJgWrhcsFMMfFFhFp
 jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
 PmmdzqPrVvPwwTWBwg
