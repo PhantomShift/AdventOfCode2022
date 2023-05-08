@@ -8,14 +8,13 @@ fn get_data_start(msg: &str, offset: usize) -> usize {
             recorded.pop_front();
         }
         recorded.push_back(char);
-        if recorded.len() < offset { continue }
-        else { return index + 1 }
+        if recorded.len() == offset { return index + 1; }
     }
     panic!("Never found start of data");
 }
 
 #[test]
-fn day_6_part_1() {
+fn day_6_part_1_alt() {
     let test_cases = [
         ("bvwbjplbgvbhsrlpgdmjqwftvncz", 5),
         ("nppdvjthqldpwncqszvftbrmjlhg", 6),
@@ -28,7 +27,7 @@ fn day_6_part_1() {
 }
 
 #[test]
-fn day_6_part_2() {
+fn day_6_part_2_alt() {
     let test_cases = [
         ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 19),
         ("bvwbjplbgvbhsrlpgdmjqwftvncz", 23),
