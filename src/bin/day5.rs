@@ -62,7 +62,7 @@ fn parse_input(input: &str, version: CrateMoverVersion) -> String {
             CrateMoverVersion::NineThousandOne => {
                 let mut to_move = Vec::new();
                 for _ in 0..instruction.crates {
-                    to_move.push(crates[instruction.start].pop().expect("Attempt to move non-existent crate"))
+                    to_move.push(crates[instruction.start].pop().expect("Attempt to move non-existent crate"));
                 }
                 for to_move in to_move.iter().rev() {
                     crates[instruction.dest].push(*to_move);
