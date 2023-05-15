@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use AdventOfCode2022::utils::split_lines_group;
+use advent_of_code2022::utils::split_lines_group;
 
 #[derive(Debug)]
 enum Operation {
