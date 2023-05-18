@@ -275,6 +275,10 @@ pub mod point {
 
             v
         }
+
+        pub fn add_tuple(&self, t: (N, N)) -> Self {
+            *self + t.into()
+        }
     }
 
     impl<N> From<(N, N)> for Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
@@ -292,6 +296,14 @@ pub mod point {
     impl<N> PartialEq<(N, N)> for Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
         fn eq(&self, other: &(N, N)) -> bool {
             self.x == other.0 && self.y == other.1
+        }
+    }
+
+    impl<N> std::ops::Add for Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
+        type Output = Self;
+
+        fn add(self, rhs: Self) -> Self::Output {
+            Self { x: self.x + rhs.x, y: self.y + rhs.y }
         }
     }
 
