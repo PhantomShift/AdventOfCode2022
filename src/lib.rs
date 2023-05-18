@@ -229,3 +229,81 @@ pub mod sand_stuff {
         }
     }
 }
+
+pub mod point {
+    use std::hash::Hash;
+    use std::ops::RangeBounds;
+    use num::{Integer, Signed, ToPrimitive, range_inclusive};
+    use num::{abs, range};
+
+    /// 2-dimensional points object with signed integers
+    #[derive(Debug, Hash, Clone, Copy, Eq)]
+    pub struct Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
+        pub x: N,
+        pub y: N
+    }
+    
+    impl<N> Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
+        pub fn new(x: N, y: N) -> Self {
+            Point { x: x, y: y }
+        }
+
+        pub fn zero() -> Self {
+            Point { x: N::zero(), y: N::zero() }
+        }
+
+        pub fn in_range(&self, corner_a: Self, corner_b: Self) -> bool {
+            range(corner_a.x.min(corner_b.x), corner_a.x.max(corner_b.x)).contains(&self.x)
+            && range(corner_a.y.min(corner_b.y), corner_a.y.max(corner_b.y)).contains(&self.y)
+        }
+
+        pub fn manhattan_distance(&self, other: &Self) -> N {
+            abs(self.x - other.x) + abs(self.y - other.y)
+        }
+
+        /// # Panic
+        /// Panics if `distance` is negative
+        pub fn points_within_manhattan_distance(point: Self, distance: N) -> Vec<Self> {
+            assert!(distance.is_positive());
+            let mut v = Vec::new();
+            for y in range_inclusive(point.y - distance, point.y + distance) {
+                let d = distance - abs(point.y - y);
+                for x in range_inclusive(point.x - d, point.x + d) {
+                    v.push(Point { x, y })
+                }
+            }
+
+            v
+        }
+    }
+
+    impl<N> From<(N, N)> for Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
+        fn from(value: (N, N)) -> Self {
+            Point { x: value.0, y: value.1 }
+        }
+    }
+
+    impl<N> PartialEq for Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
+        fn eq(&self, other: &Self) -> bool {
+            self.x == other.x && self.y == other.y
+        }
+    }
+
+    impl<N> PartialEq<(N, N)> for Point<N> where N: Integer + Signed + Copy + Hash + ToPrimitive {
+        fn eq(&self, other: &(N, N)) -> bool {
+            self.x == other.0 && self.y == other.1
+        }
+    }
+
+    #[allow(unused_imports)]
+    mod tests {
+        use super::*;
+        #[test]
+        fn test() {
+            let point = Point {x: 1, y: 2};
+            let other = Point {x: 5, y: 5};
+            
+            println!("{}", point.manhattan_distance(&other));
+        }
+    }
+}
