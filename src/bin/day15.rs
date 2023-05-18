@@ -6,6 +6,52 @@ use std::collections::{HashMap, HashSet};
 use regex;
 use lazy_static::lazy_static;
 
+// New code
+// I don't know why I didn't just do this in the first place
+/// Structure with two points;
+/// Solution-specific implementation that assumes a slope of 1 or -1 (or 0 for zero-length lines)
+#[derive(PartialEq)]
+struct Line {
+    a: Point<i32>,
+    b: Point<i32>
+}
+
+impl Line {
+    fn new(a: Point<i32>, b: Point<i32>) -> Self {
+        Line { a, b }
+    }
+
+    fn slope(&self) -> i32 {
+        if self.a.x < self.b.x {
+            (self.b.y - self.a.y).signum()
+        } else if self.a.x > self.b.x {
+            (self.a.y - self.b.y).signum()
+        } else {
+            0
+        }
+    }
+
+    fn base(&self) -> i32 {
+        self.a.y - self.a.x * self.slope()
+    }
+
+    fn intersect(&self, other: &Line) -> Option<Point<i32>> {
+        if self.slope() == other.slope() { return None; }
+
+        let x = (self.base() - other.base()) / 2;
+        let y = self.slope() * x + self.base();
+        
+        if x > self.a.x.max(self.b.x) || x < self.a.x.min(self.b.x)
+        || y > self.a.y.max(self.b.y) || y < self.a.y.min(self.b.y) {
+            return None;
+        }
+        
+
+        Some(Point::new(x, y))
+    }
+}
+// End of new code
+
 fn get_points_on_distance_within_bounds(p: Point<i32>, distance: i32, min: i32, max: i32) -> HashSet<Point<i32>> {
     let r = min..=max;
     let mut points = HashSet::new();
@@ -156,6 +202,37 @@ impl CaveMap {
         None
     }
 
+    /// Full disclosure, this is written after I looked at the AoC subreddit,
+    /// curious about how others solved the problem. In hindsight I feel super
+    /// dumb not taking this approach and doing it how I did it before,
+    /// but at least I know now.
+    fn get_unknown_in_range_optimized_more(&self, min: i32, max: i32) -> Option<Point<i32>> {
+        let (corner_a, corner_b) = (Point::new(min, min), Point::new(max, max));
+        for (&signal, &distance) in self.signals.iter() {
+            let top_to_left = Line::new(Point::new(signal.x, signal.y + distance), Point::new(signal.x + distance, signal.y));
+            let left_to_bottom = Line::new(Point::new(signal.x + distance, signal.y), Point::new(signal.x, signal.y - distance));
+            for (&other_s, &other_d) in self.signals.iter() {
+                if signal == other_s { continue; }
+                let top_to_right = Line::new(Point::new(other_s.x, other_s.y + other_d), Point::new(other_s.x - distance, other_s.y));
+                let right_to_bottom = Line::new(Point::new(other_s.x - distance, other_s.y), Point::new(other_s.x, other_s.y - distance));
+                if let Some(intersect) = top_to_left.intersect(&top_to_right) {
+                    let potential = intersect.add_tuple((0, 1));
+                    if potential.in_range(corner_a, corner_b) && self.is_point_unknown(potential) { return Some(potential); }
+                    let potential = intersect.add_tuple((0, -1));
+                    if potential.in_range(corner_a, corner_b) && self.is_point_unknown(potential) { return Some(potential); }
+                }
+                if let Some(intersect) = left_to_bottom.intersect(&right_to_bottom) {
+                    let potential = intersect.add_tuple((0, 1));
+                    if potential.in_range(corner_a, corner_b) && self.is_point_unknown(potential) { return Some(potential); }
+                    let potential = intersect.add_tuple((0, -1));
+                    if potential.in_range(corner_a, corner_b) && self.is_point_unknown(potential) { return Some(potential); }
+                }
+            }
+        }
+
+        None
+    }
+
     fn get_empty_in_row(&self, row_number: i32) -> Vec<Point<i32>> {
         let mut empty = Vec::new();
         'range: for x in self.min.x..=self.max.x {
@@ -240,7 +317,8 @@ fn day_15_part_2() {
     }
 
     // let unknown = map.get_unknown_in_range(Point::new(0, 0), Point::new(20, 20)).unwrap();
-    let unknown = map.get_unknown_in_range_optimized(0, 20).unwrap();
+    // let unknown = map.get_unknown_in_range_optimized(0, 20).unwrap();
+    let unknown = map.get_unknown_in_range_optimized_more(0, 20).unwrap();
 
     assert_eq!(Point::new(14, 11), unknown);
     assert_eq!(56000011, calc_tuning_freq(&unknown));
@@ -285,7 +363,8 @@ fn main() {
     
     let maximum = 4000000;
     // let unknown = map.get_unknown_in_range(Point::new(0, 0), Point::new(maximum, maximum)).unwrap();
-    let unknown = map.get_unknown_in_range_optimized(0, maximum).unwrap();
+    // let unknown = map.get_unknown_in_range_optimized(0, maximum).unwrap();
+    let unknown = map.get_unknown_in_range_optimized_more(0, maximum).unwrap();
     
     println!("The tuning frequency of the one tile out of range is {}", calc_tuning_freq(&unknown));
 }
