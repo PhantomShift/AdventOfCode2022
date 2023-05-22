@@ -9,6 +9,131 @@ pub mod utils {
     
         result
     }
+
+    /// Very very rudimentary implementation of getting all
+    /// the permutations of a given list of data (currently only implemented for Vectors)
+    /// 
+    /// # Panics
+    /// Panics if factorial of length of permutable is greater than `usize`
+    pub trait Permutable<'a, T> {
+        type Item;
+        fn permutations(&'a self) -> Permutations<Self::Item>;
+    }
+
+    pub struct Permutations<'a, C> {
+        permutation_number: Option<usize>,
+        collection: &'a C
+    }
+
+    /// Returns none if `n!` > `usize::MAX`;
+    pub fn factorial(n: usize) -> Option<usize> {
+        let mut r: usize = 1;
+        for i in 1..=n {
+            match r.checked_mul(i) {
+                Some(result) => r = result,
+                None => return None
+            }
+        }
+        Some(r)
+    }
+
+    /// Transforms an integer `n` into a [factoradic](https://en.wikipedia.org/wiki/Factorial_number_system)
+    /// with given `radix`
+    /// 
+    /// # Examples
+    /// ```
+    /// pub use advent_of_code2022::utils::to_factoradic;
+    /// assert_eq!(to_factoradic(463, 6), vec![0, 1, 0, 1, 4, 3]);
+    /// ```
+    pub fn to_factoradic(n: usize, radix: usize) -> Vec<usize> {
+        let mut result = Vec::new();
+        let mut i = n;
+        for divisor in 1..=radix {
+            result.push(i % divisor);
+            i = i / divisor;
+        }
+        result.reverse();
+
+        result
+    }
+
+    /// Continuing on using the [wikipedia page on factoradics](https://en.wikipedia.org/wiki/Factorial_number_system),
+    /// maps a factoradic to a permutation of a list `0..=radix`. 
+    pub fn factoradic_as_permutation(factoradic: &Vec<usize>) -> Vec<usize> {
+        let mut set = Vec::from_iter(0..=factoradic.len());
+        let mut result = Vec::new();
+        for &n in factoradic {
+            result.push(set.remove(n))
+        }
+
+        result
+    }
+    #[test]
+    fn factoradic_as_permutation_test() {
+        let decimal = 2982;
+        let radix = 7;
+        let factoradic = to_factoradic(decimal, radix);
+        assert_eq!(factoradic, vec![4, 0, 4, 1, 0, 0, 0]);
+        let permutation = factoradic_as_permutation(&factoradic);
+        assert_eq!(permutation, vec![4, 0, 6, 2, 1, 3, 5]);
+    }
+    /// Wrapper around `to_factoradic` and `factoradic_as_permutation`
+    fn permutation_indices(n: usize, radix: usize) -> Vec<usize> {
+        factoradic_as_permutation(&to_factoradic(n, radix))
+    }
+
+    impl<'a, C> Permutations<'a, C> {
+        fn new(collection: &'a C) -> Self {
+            Permutations { permutation_number: Some(0), collection }
+        }
+    }
+    
+    impl<'a, T> Iterator for Permutations<'a, Vec<T>> {
+        type Item = Vec<&'a T>;
+
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            (0, factorial(self.collection.len()))
+        }
+        
+        fn next(&mut self) -> Option<Self::Item> {
+            match self.permutation_number {
+                None => None,
+                Some(n) if n >= factorial(self.collection.len()).expect("collection should be sufficiently small") => None,
+                Some(n) => {
+                    let radix = self.collection.len();
+                    let indices = permutation_indices(n, radix);
+                    let mut references = Vec::new();
+                    for index in indices {
+                        let v = &self.collection[index];
+                        references.push(v);
+                    }
+                    self.permutation_number = n.checked_add(1);
+
+                    Some(references)
+                }
+            }
+        }
+    }
+
+    impl<'a, T> Permutable<'a ,T> for Vec<T> {
+        type Item = Vec<T>;
+        fn permutations(&'a self) -> Permutations<Self::Item> {
+            if factorial(self.len()) == None {
+                panic!("Vector too large to get permutations of, self.len() == {}", self.len())
+            }
+            Permutations::new(self)
+        }
+    }
+
+    #[test]
+    fn permutation_simple_test() {
+        let v = vec!['a', 'b', 'c'];
+        v.permutations().for_each(|p| println!("{:?}", p));
+        let v = vec![34, 42, -9];
+        v.permutations().for_each(|p| println!("{:?}", p));
+        let v = vec!["AA", "BB", "CC", "DD"];
+        v.permutations().for_each(|p| println!("{:?}", p));
+    }
 }
 
 pub mod sand_stuff {   
